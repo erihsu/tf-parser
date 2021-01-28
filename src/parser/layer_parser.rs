@@ -488,8 +488,8 @@ mod test {
         defaultWidth            = 0.07
         minWidth            = 0.07
         sameNetMinSpacing       = 0.07
-        minSpacing              = 0.1
         cornerMinSpacing        = 0.09
+        minSpacing              = 0.1
         maxCurrDensity          = 7000
         fatTblDimension         = 5
         fatTblThreshold         = (0,0.241,0.35,0.521,0.646)
