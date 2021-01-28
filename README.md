@@ -6,11 +6,17 @@ Technology file is commonly used in modern EDA PR tools to define technology pro
 
 ## Backend EDA in Rust
 The project is a part of PR tool(backend) parser collection in Rust. We will gradually develop lef/def/spef parser in Rust and finally opensource. 
-## Similar project.
+
+### Similar project
  * [OpenRoad lef parser](https://github.com/The-OpenROAD-Project/lef)
  * [OpenRoad def parser](https://github.com/The-OpenROAD-Project/def)
  * [openTimer spef parser](https://github.com/OpenTimer/Parser-SPEF)
 
 ## Frontend EDA in Rust
 For frontend EDA parser, you can find [sv-parser](https://github.com/dalance/sv-parser), [sdc-parser](https://github.com/dalance/sdc-parser)
+
+
+# The parser
+The parser is developed based on nom parser combinator framework and currently support parse Synopsys Appolo technology format file. You can try it under example
+
 If you are interested in our work, please contact [xuzhenyutc@icloud.com]
