@@ -15,8 +15,12 @@ The project is a part of PR tool(backend) parser collection in Rust. We will gra
 ## Frontend EDA in Rust
 For frontend EDA parser, you can find [sv-parser](https://github.com/dalance/sv-parser), [sdc-parser](https://github.com/dalance/sdc-parser)
 
+# Technology file specification
+Unfortunately, it's very hard to find universal technology file specification. Each EDA vendor define their own technology file format. We follow the .tf text format to develop the parser. 
+The .tf generally contains 10 parts: Comment, Technology, Color, Stipple, Tile, Layer, ContactCode, DesignRule, PRRule and DensityRule. We develop each block's subparser and combine them together to parse the whole .tf file
 
 # The parser
+
 The parser is developed based on nom parser combinator framework and currently support parse Synopsys Appolo technology format file. You can try it under example
 
 If you are interested in our work, please contact [xuzhenyutc@icloud.com]
