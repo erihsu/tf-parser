@@ -5,7 +5,7 @@ Technology file parser in Rust
 Technology file is commonly used in modern EDA PR tools to define technology process information including layer, contact, designrule and etc. EDA tool vendor may require foundries to provide this kind of file in different text format in PDK(process design kit).
 
 ## EDA parser in Rust
-The project is a part of backend EDA parser collection in Rust. We're developing lef/def/spef parser in Rust and finally opensource. 
+The project is a part of backend EDA parser collection in Rust. We're also developing lef/spef parser in Rust and finally opensource. 
 
 ### Similar project
  * [OpenRoad lef parser](https://github.com/The-OpenROAD-Project/lef)
@@ -21,6 +21,6 @@ The .tf generally contains 10 parts: Comment, Technology, Color, Stipple, Tile, 
 
 # The parser
 
-The parser is developed based on nom parser combinator framework and currently support parse Synopsys Appolo technology format file. You can try it under example
+The parser is developed based on nom parser combinator framework and currently support parse Synopsys Apollo technology format file. You can try it under example
 
 If you are interested in our work, please contact [xuzhenyutc@icloud.com]
