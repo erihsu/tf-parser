@@ -10,6 +10,7 @@ pub struct TfData {
     pub densityrule: Vec<TfDensityRule>,
 }
 
+#[derive(Debug)]
 pub struct TfTechnology {
     pub technology: String,
     pub dielectric: f32,

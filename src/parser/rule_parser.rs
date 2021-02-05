@@ -2,26 +2,27 @@ use super::base_parser::{
     boolean_number, float, float_list, number_list, positive_number, qstring, ws,
 };
 
-use nom::bytes::complete::tag;
-
-use crate::model::{
-    TfCutRule, TfDensityRule, TfDesignRule, TfMetalRule, TfPRRule, TfPolyRule, TfRule,
+use nom::{
+    branch::{alt, permutation},
+    bytes::complete::tag,
+    combinator::{map, opt},
+    error::context,
+    sequence::{delimited, preceded, tuple},
 };
 
-use nom::branch::{alt, permutation};
-use nom::combinator::{map, opt};
+use crate::{
+    model::{TfCutRule, TfDensityRule, TfDesignRule, TfMetalRule, TfPRRule, TfPolyRule, TfRule},
+    TfRes,
+};
 
-use nom::sequence::{delimited, preceded, tuple};
-use nom::IResult;
-
-fn layer_pair(input: &str) -> IResult<&str, (&str, &str)> {
+fn layer_pair(input: &str) -> TfRes<&str, (&str, &str)> {
     tuple((
         preceded(tuple((ws(tag("layer1")), ws(tag("=")))), qstring),
         preceded(tuple((ws(tag("layer2")), ws(tag("=")))), qstring),
     ))(input)
 }
 
-fn routelayer_rule(input: &str) -> IResult<&str, TfMetalRule> {
+fn routelayer_rule(input: &str) -> TfRes<&str, TfMetalRule> {
     let (input, data) = tuple((
         preceded(tuple((ws(tag("minSpacing")), ws(tag("=")))), float),
         opt(preceded(
@@ -38,7 +39,7 @@ fn routelayer_rule(input: &str) -> IResult<&str, TfMetalRule> {
     ))
 }
 
-fn cutlayer_rule(input: &str) -> IResult<&str, TfCutRule> {
+fn cutlayer_rule(input: &str) -> TfRes<&str, TfCutRule> {
     let (input, data) = permutation((
         preceded(
             tuple((ws(tag("endOfLineEnc2NeighborTblSize")), ws(tag("=")))),
@@ -111,7 +112,7 @@ fn cutlayer_rule(input: &str) -> IResult<&str, TfCutRule> {
     ))
 }
 
-fn polylayer_rule(input: &str) -> IResult<&str, TfPolyRule> {
+fn polylayer_rule(input: &str) -> TfRes<&str, TfPolyRule> {
     let (input, data) = tuple((
         preceded(
             tuple((ws(tag("fatWireViaEncTblSize")), ws(tag("=")))),
@@ -154,105 +155,120 @@ fn polylayer_rule(input: &str) -> IResult<&str, TfPolyRule> {
     ))
 }
 
-pub fn designrule_parser(input: &str) -> IResult<&str, TfDesignRule> {
-    let (input, data) = preceded(
-        ws(tag("DesignRule")),
-        delimited(
-            ws(tag("{")),
-            tuple((
-                layer_pair,
-                alt((
-                    map(routelayer_rule, |x| TfRule::MetalRule(x)),
-                    map(cutlayer_rule, |x| TfRule::CutRule(x)),
-                    map(polylayer_rule, |x| TfRule::PolyRule(x)),
+pub fn designrule_parser(input: &str) -> TfRes<&str, TfDesignRule> {
+    context(
+        "DesignRule Section",
+        preceded(
+            ws(tag("DesignRule")),
+            delimited(
+                ws(tag("{")),
+                tuple((
+                    layer_pair,
+                    alt((
+                        map(routelayer_rule, |x| TfRule::MetalRule(x)),
+                        map(cutlayer_rule, |x| TfRule::CutRule(x)),
+                        map(polylayer_rule, |x| TfRule::PolyRule(x)),
+                    )),
                 )),
-            )),
-            ws(tag("}")),
+                ws(tag("}")),
+            ),
         ),
-    )(input)?;
-    Ok((
-        input,
-        TfDesignRule {
-            layer1: (data.0).0.to_string(),
-            layer2: (data.0).1.to_string(),
-            rule_data: data.1,
-        },
-    ))
+    )(input)
+    .map(|(res, data)| {
+        (
+            res,
+            TfDesignRule {
+                layer1: (data.0).0.to_string(),
+                layer2: (data.0).1.to_string(),
+                rule_data: data.1,
+            },
+        )
+    })
 }
 
-pub fn pr_rule_parser(input: &str) -> IResult<&str, TfPRRule> {
-    let (input, data) = preceded(
-        ws(tag("PRRule")),
-        delimited(
-            ws(tag("{")),
-            tuple((
-                preceded(tuple((ws(tag("rowSpacingTopTop")), ws(tag("=")))), float),
-                opt(preceded(
-                    tuple((ws(tag("rowSpacingTopBot")), ws(tag("=")))),
-                    float,
+pub fn pr_rule_parser(input: &str) -> TfRes<&str, TfPRRule> {
+    context(
+        "PR Rule Section",
+        preceded(
+            ws(tag("PRRule")),
+            delimited(
+                ws(tag("{")),
+                tuple((
+                    preceded(tuple((ws(tag("rowSpacingTopTop")), ws(tag("=")))), float),
+                    opt(preceded(
+                        tuple((ws(tag("rowSpacingTopBot")), ws(tag("=")))),
+                        float,
+                    )),
+                    preceded(tuple((ws(tag("rowSpacingBotBot")), ws(tag("=")))), float),
+                    preceded(
+                        tuple((ws(tag("abuttableTopTop")), ws(tag("=")))),
+                        positive_number,
+                    ),
+                    preceded(
+                        tuple((ws(tag("abuttableTopBot")), ws(tag("=")))),
+                        positive_number,
+                    ),
+                    preceded(
+                        tuple((ws(tag("abuttableBotBot")), ws(tag("=")))),
+                        positive_number,
+                    ),
                 )),
-                preceded(tuple((ws(tag("rowSpacingBotBot")), ws(tag("=")))), float),
-                preceded(
-                    tuple((ws(tag("abuttableTopTop")), ws(tag("=")))),
-                    positive_number,
-                ),
-                preceded(
-                    tuple((ws(tag("abuttableTopBot")), ws(tag("=")))),
-                    positive_number,
-                ),
-                preceded(
-                    tuple((ws(tag("abuttableBotBot")), ws(tag("=")))),
-                    positive_number,
-                ),
-            )),
-            ws(tag("}")),
+                ws(tag("}")),
+            ),
         ),
-    )(input)?;
-    Ok((
-        input,
-        TfPRRule {
-            rowspacing_toptop: data.0,
-            rowspacing_topbot: data.1,
-            rowspacing_botbot: data.2,
-            abuttable_toptop: data.3,
-            abuttabletopbot: data.4,
-            abuttablebotbot: data.5,
-        },
-    ))
+    )(input)
+    .map(|(res, data)| {
+        (
+            res,
+            TfPRRule {
+                rowspacing_toptop: data.0,
+                rowspacing_topbot: data.1,
+                rowspacing_botbot: data.2,
+                abuttable_toptop: data.3,
+                abuttabletopbot: data.4,
+                abuttablebotbot: data.5,
+            },
+        )
+    })
 }
 
-pub fn density_rule_parser(input: &str) -> IResult<&str, TfDensityRule> {
-    let (input, data) = preceded(
-        ws(tag("DensityRule")),
-        delimited(
-            ws(tag("{")),
-            tuple((
-                preceded(tuple((ws(tag("layer")), ws(tag("=")))), qstring),
-                preceded(
-                    tuple((ws(tag("windowSize")), ws(tag("=")))),
-                    positive_number,
-                ),
-                preceded(
-                    tuple((ws(tag("minDensity")), ws(tag("=")))),
-                    positive_number,
-                ),
-                preceded(
-                    tuple((ws(tag("maxDensity")), ws(tag("=")))),
-                    positive_number,
-                ),
-            )),
-            ws(tag("}")),
+pub fn density_rule_parser(input: &str) -> TfRes<&str, TfDensityRule> {
+    context(
+        "DensityRule Section",
+        preceded(
+            ws(tag("DensityRule")),
+            delimited(
+                ws(tag("{")),
+                tuple((
+                    preceded(tuple((ws(tag("layer")), ws(tag("=")))), qstring),
+                    preceded(
+                        tuple((ws(tag("windowSize")), ws(tag("=")))),
+                        positive_number,
+                    ),
+                    preceded(
+                        tuple((ws(tag("minDensity")), ws(tag("=")))),
+                        positive_number,
+                    ),
+                    preceded(
+                        tuple((ws(tag("maxDensity")), ws(tag("=")))),
+                        positive_number,
+                    ),
+                )),
+                ws(tag("}")),
+            ),
         ),
-    )(input)?;
-    Ok((
-        input,
-        TfDensityRule {
-            layer: data.0.to_string(),
-            window_size: data.1,
-            min_density: data.2,
-            max_density: data.3,
-        },
-    ))
+    )(input)
+    .map(|(res, data)| {
+        (
+            res,
+            TfDensityRule {
+                layer: data.0.to_string(),
+                window_size: data.1,
+                min_density: data.2,
+                max_density: data.3,
+            },
+        )
+    })
 }
 
 #[cfg(test)]

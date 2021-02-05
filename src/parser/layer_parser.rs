@@ -2,19 +2,24 @@ use super::base_parser::{
     boolean_number, float, float_list, number_list, number_qlist, positive_number, qnumber,
     qstring, ws,
 };
-use nom::branch::{alt, permutation};
-
-use nom::bytes::complete::tag;
-
-use crate::model::{
-    ColorEnum, CutFatExtTbl, CutFatTble, CutLayerRule, EndLine2Neighbor, LayerRule, MetalFatTbl,
-    MetalLayerRule, PolyLayerRule, SpecialCutLayerRule, SpecialMetalLayerRule, TfLayer,
+use nom::{
+    branch::{alt, permutation},
+    bytes::complete::tag,
+    combinator::{map, opt},
+    error::context,
+    sequence::{delimited, preceded, tuple},
 };
-use nom::combinator::{map, opt};
-use nom::sequence::{delimited, preceded, tuple};
-use nom::IResult;
 
-fn layer_resistance(input: &str) -> IResult<&str, (f32, f32, f32)> {
+use crate::{
+    model::{
+        ColorEnum, CutFatExtTbl, CutFatTble, CutLayerRule, EndLine2Neighbor, LayerRule,
+        MetalFatTbl, MetalLayerRule, PolyLayerRule, SpecialCutLayerRule, SpecialMetalLayerRule,
+        TfLayer,
+    },
+    TfRes,
+};
+
+fn layer_resistance(input: &str) -> TfRes<&str, (f32, f32, f32)> {
     tuple((
         preceded(tuple((ws(tag("unitMinResistance")), ws(tag("=")))), float),
         preceded(tuple((ws(tag("unitNomResistance")), ws(tag("=")))), float),
@@ -22,7 +27,7 @@ fn layer_resistance(input: &str) -> IResult<&str, (f32, f32, f32)> {
     ))(input)
 }
 
-fn layer_height_from_sub(input: &str) -> IResult<&str, (f32, f32, f32)> {
+fn layer_height_from_sub(input: &str) -> TfRes<&str, (f32, f32, f32)> {
     tuple((
         preceded(
             tuple((ws(tag("unitMinHeightFromSub")), ws(tag("=")))),
@@ -39,7 +44,7 @@ fn layer_height_from_sub(input: &str) -> IResult<&str, (f32, f32, f32)> {
     ))(input)
 }
 
-fn layer_thickness(input: &str) -> IResult<&str, (f32, f32, f32)> {
+fn layer_thickness(input: &str) -> TfRes<&str, (f32, f32, f32)> {
     tuple((
         preceded(tuple((ws(tag("unitMinThickness")), ws(tag("=")))), float),
         preceded(tuple((ws(tag("unitNomThickness")), ws(tag("=")))), float),
@@ -47,7 +52,7 @@ fn layer_thickness(input: &str) -> IResult<&str, (f32, f32, f32)> {
     ))(input)
 }
 
-fn layer_fatobj(input: &str) -> IResult<&str, (f32, f32, f32, f32)> {
+fn layer_fatobj(input: &str) -> TfRes<&str, (f32, f32, f32, f32)> {
     tuple((
         preceded(tuple((ws(tag("fatWireThreshold")), ws(tag("=")))), float),
         preceded(tuple((ws(tag("fatThinMinSpacing")), ws(tag("=")))), float),
@@ -56,7 +61,7 @@ fn layer_fatobj(input: &str) -> IResult<&str, (f32, f32, f32, f32)> {
     ))(input)
 }
 
-fn layer_fat_tbl(input: &str) -> IResult<&str, MetalFatTbl> {
+fn layer_fat_tbl(input: &str) -> TfRes<&str, MetalFatTbl> {
     let (input, data) = tuple((
         preceded(
             tuple((ws(tag("fatTblDimension")), ws(tag("=")))),
@@ -83,7 +88,7 @@ fn layer_fat_tbl(input: &str) -> IResult<&str, MetalFatTbl> {
     ))
 }
 
-fn layer_endline2neighbor(input: &str) -> IResult<&str, EndLine2Neighbor> {
+fn layer_endline2neighbor(input: &str) -> TfRes<&str, EndLine2Neighbor> {
     let (input, data) = tuple((
         preceded(
             tuple((ws(tag("endOfLine2NeighborThreshold")), ws(tag("=")))),
@@ -121,18 +126,18 @@ fn layer_endline2neighbor(input: &str) -> IResult<&str, EndLine2Neighbor> {
     ))
 }
 
-fn layer_minarea(input: &str) -> IResult<&str, (f32, f32)> {
+fn layer_minarea(input: &str) -> TfRes<&str, (f32, f32)> {
     tuple((
         preceded(tuple((ws(tag("minArea")), ws(tag("=")))), float),
         preceded(tuple((ws(tag("minEnclosedArea")), ws(tag("=")))), float),
     ))(input)
 }
 
-fn layer_current_density(input: &str) -> IResult<&str, f32> {
+fn layer_current_density(input: &str) -> TfRes<&str, f32> {
     preceded(tuple((ws(tag("maxCurrDensity")), ws(tag("=")))), float)(input)
 }
 
-fn metal_layerrule_parser(input: &str) -> IResult<&str, MetalLayerRule> {
+fn metal_layerrule_parser(input: &str) -> TfRes<&str, MetalLayerRule> {
     let (input, data) = tuple((
         preceded(tuple((ws(tag("pitch")), ws(tag("=")))), float),
         preceded(tuple((ws(tag("defaultWidth")), ws(tag("=")))), float),
@@ -171,7 +176,7 @@ fn metal_layerrule_parser(input: &str) -> IResult<&str, MetalLayerRule> {
     ))
 }
 
-fn cutlayer_fat_tbl(input: &str) -> IResult<&str, CutFatTble> {
+fn cutlayer_fat_tbl(input: &str) -> TfRes<&str, CutFatTble> {
     let (input, data) = tuple((
         preceded(
             tuple((ws(tag("fatTblDimension")), ws(tag("=")))),
@@ -201,7 +206,7 @@ fn cutlayer_fat_tbl(input: &str) -> IResult<&str, CutFatTble> {
     ))
 }
 
-fn cutlayer_ext_fat_tbl(input: &str) -> IResult<&str, CutFatExtTbl> {
+fn cutlayer_ext_fat_tbl(input: &str) -> TfRes<&str, CutFatExtTbl> {
     let (input, data) = tuple((
         preceded(
             tuple((ws(tag("fatTblExtensionDimension")), ws(tag("=")))),
@@ -259,7 +264,7 @@ fn cutlayer_ext_fat_tbl(input: &str) -> IResult<&str, CutFatExtTbl> {
     ))
 }
 
-fn cut_layerrule_parser(input: &str) -> IResult<&str, CutLayerRule> {
+fn cut_layerrule_parser(input: &str) -> TfRes<&str, CutLayerRule> {
     let (input, data) = tuple((
         preceded(tuple((ws(tag("pitch")), ws(tag("=")))), float),
         preceded(tuple((ws(tag("defaultWidth")), ws(tag("=")))), float),
@@ -296,7 +301,7 @@ fn cut_layerrule_parser(input: &str) -> IResult<&str, CutLayerRule> {
     ))
 }
 
-fn poly_layerrule_parser(input: &str) -> IResult<&str, PolyLayerRule> {
+fn poly_layerrule_parser(input: &str) -> TfRes<&str, PolyLayerRule> {
     let (input, data) = tuple((
         preceded(tuple((ws(tag("pitch")), ws(tag("=")))), float),
         preceded(tuple((ws(tag("defaultWidth")), ws(tag("=")))), float),
@@ -314,7 +319,7 @@ fn poly_layerrule_parser(input: &str) -> IResult<&str, PolyLayerRule> {
     ))
 }
 
-fn special_metal_layerrule_parser(input: &str) -> IResult<&str, SpecialMetalLayerRule> {
+fn special_metal_layerrule_parser(input: &str) -> TfRes<&str, SpecialMetalLayerRule> {
     let (input, data) = tuple((
         preceded(tuple((ws(tag("pitch")), ws(tag("=")))), float),
         preceded(tuple((ws(tag("defaultWidth")), ws(tag("=")))), float),
@@ -334,68 +339,73 @@ fn special_metal_layerrule_parser(input: &str) -> IResult<&str, SpecialMetalLaye
     ))
 }
 
-fn special_cut_layerrule_parser(input: &str) -> IResult<&str, SpecialCutLayerRule> {
+fn special_cut_layerrule_parser(input: &str) -> TfRes<&str, SpecialCutLayerRule> {
     let (input, data) = preceded(tuple((ws(tag("minSpacing")), ws(tag("=")))), float)(input)?;
     Ok((input, SpecialCutLayerRule { min_spacing: data }))
 }
 
-pub fn layer_parser(input: &str) -> IResult<&str, TfLayer> {
-    let (input, (name, data)) = tuple((
-        preceded(ws(tag("Layer")), qstring),
-        delimited(
-            ws(tag("{")),
-            permutation((
-                preceded(
-                    tuple((ws(tag("layerNumber")), ws(tag("=")))),
-                    positive_number,
-                ), // 0
-                preceded(
-                    tuple((ws(tag("maskName")), ws(tag("=")))),
-                    alt((map(qstring, |x| Some(x)), map(ws(tag("\"\"")), |_| None))),
-                ), // 1
-                opt(preceded(
-                    tuple((ws(tag("isDefaultLayer")), ws(tag("=")))),
-                    boolean_number,
-                )), // 2
-                preceded(tuple((ws(tag("visible")), ws(tag("=")))), boolean_number), // 3
-                preceded(tuple((ws(tag("selectable")), ws(tag("=")))), boolean_number), // 4
-                preceded(tuple((ws(tag("blink")), ws(tag("=")))), boolean_number),   // 5
-                preceded(
-                    tuple((ws(tag("color")), ws(tag("=")))),
-                    alt((
-                        map(qstring, |x| ColorEnum::SelfDef(x.to_string())),
-                        map(qnumber, |x| ColorEnum::Builtin(x)),
-                    )),
-                ), // 6
-                preceded(tuple((ws(tag("lineStyle")), ws(tag("=")))), qstring),      // 7
-                preceded(tuple((ws(tag("pattern")), ws(tag("=")))), qstring),        // 8
-                opt(alt((
-                    map(metal_layerrule_parser, |res| LayerRule::Metal(res)),
-                    map(cut_layerrule_parser, |res| LayerRule::Cut(res)),
-                    map(poly_layerrule_parser, |res| LayerRule::Poly(res)),
-                    map(special_metal_layerrule_parser, |res| LayerRule::SMetal(res)),
-                    map(special_cut_layerrule_parser, |res| LayerRule::SCut(res)),
-                ))),
-            )),
-            ws(tag("}")),
-        ),
-    ))(input)?;
-    Ok((
-        input,
-        TfLayer {
-            layer_name: name.to_string(),
-            layer_id: data.0,
-            mask_name: data.1.map(|x| x.to_string()),
-            visible: data.3,
-            selectable: data.4,
-            blink: data.5,
-            is_defaultlayer: data.2.map_or(false, |_| true),
-            line_style: data.7.to_string(),
-            pattern: data.8.to_string(),
-            color: data.6,
-            layer_rule: data.9, // None mean it's text layer
-        },
-    ))
+pub fn layer_parser(input: &str) -> TfRes<&str, TfLayer> {
+    context(
+        "Layer Section",
+        tuple((
+            preceded(ws(tag("Layer")), qstring),
+            delimited(
+                ws(tag("{")),
+                permutation((
+                    preceded(
+                        tuple((ws(tag("layerNumber")), ws(tag("=")))),
+                        positive_number,
+                    ), // 0
+                    preceded(
+                        tuple((ws(tag("maskName")), ws(tag("=")))),
+                        alt((map(qstring, |x| Some(x)), map(ws(tag("\"\"")), |_| None))),
+                    ), // 1
+                    opt(preceded(
+                        tuple((ws(tag("isDefaultLayer")), ws(tag("=")))),
+                        boolean_number,
+                    )), // 2
+                    preceded(tuple((ws(tag("visible")), ws(tag("=")))), boolean_number), // 3
+                    preceded(tuple((ws(tag("selectable")), ws(tag("=")))), boolean_number), // 4
+                    preceded(tuple((ws(tag("blink")), ws(tag("=")))), boolean_number),   // 5
+                    preceded(
+                        tuple((ws(tag("color")), ws(tag("=")))),
+                        alt((
+                            map(qstring, |x| ColorEnum::SelfDef(x.to_string())),
+                            map(qnumber, |x| ColorEnum::Builtin(x)),
+                        )),
+                    ), // 6
+                    preceded(tuple((ws(tag("lineStyle")), ws(tag("=")))), qstring),      // 7
+                    preceded(tuple((ws(tag("pattern")), ws(tag("=")))), qstring),        // 8
+                    opt(alt((
+                        map(metal_layerrule_parser, |res| LayerRule::Metal(res)),
+                        map(cut_layerrule_parser, |res| LayerRule::Cut(res)),
+                        map(poly_layerrule_parser, |res| LayerRule::Poly(res)),
+                        map(special_metal_layerrule_parser, |res| LayerRule::SMetal(res)),
+                        map(special_cut_layerrule_parser, |res| LayerRule::SCut(res)),
+                    ))),
+                )),
+                ws(tag("}")),
+            ),
+        )),
+    )(input)
+    .map(|(res, (name, data))| {
+        (
+            res,
+            TfLayer {
+                layer_name: name.to_string(),
+                layer_id: data.0,
+                mask_name: data.1.map(|x| x.to_string()),
+                visible: data.3,
+                selectable: data.4,
+                blink: data.5,
+                is_defaultlayer: data.2.map_or(false, |_| true),
+                line_style: data.7.to_string(),
+                pattern: data.8.to_string(),
+                color: data.6,
+                layer_rule: data.9, // None mean it's text layer
+            },
+        )
+    })
 }
 
 #[cfg(test)]

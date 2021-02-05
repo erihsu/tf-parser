@@ -9,17 +9,47 @@
 
 mod model;
 mod parser;
-pub use model::TfData;
-pub use parser::tf_parser::tf_parser;
-use std::fs;
-use std::path::Path;
 
-/// parse tf file into TfData struct
+use model::TfData;
+use parser::tf_parser;
+
+use nom::{
+    error::{convert_error, VerboseError},
+    Err, IResult,
+};
+use std::{
+    fs,
+    io::{Error, ErrorKind},
+    path::Path,
+    str::FromStr,
+};
+
+impl FromStr for TfData {
+    type Err = Error;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match tf_parser(s) {
+            Ok((_, u)) => Ok(u),
+            Err(Err::Error(e)) => {
+                println!("[TFParser] `VerboseError`:\n{}", convert_error(s, e));
+                Err(Error::new(
+                    ErrorKind::InvalidData,
+                    "Invalid Technology File",
+                ))
+            }
+            _ => Err(Error::new(
+                ErrorKind::InvalidData,
+                "Invalid Technology File",
+            )),
+        }
+    }
+}
+
 pub fn parse_tf<P>(file_path: P) -> Result<TfData, Box<dyn std::error::Error>>
 where
     P: AsRef<Path>,
 {
-    let input_string = fs::read_to_string(file_path)?;
-    let (_, result) = tf_parser(&input_string).unwrap();
-    Ok(result)
+    let tf_data: TfData = fs::read_to_string(file_path)?.parse()?;
+    Ok(tf_data)
 }
+
+pub type TfRes<T, U> = IResult<T, U, VerboseError<T>>;

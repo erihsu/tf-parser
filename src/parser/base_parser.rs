@@ -3,11 +3,11 @@ use nom::branch::alt;
 use nom::bytes::complete::{tag, take_until};
 use nom::character::complete::{alpha1, alphanumeric1, char, digit1, multispace0, one_of};
 use nom::combinator::{map, map_res, opt, recognize, value};
-use nom::error::ParseError;
+
 use nom::multi::{many0, many1, separated_list1};
 
+use crate::TfRes;
 use nom::sequence::{delimited, pair, preceded, terminated, tuple};
-use nom::IResult;
 use std::str;
 use std::str::FromStr;
 
@@ -15,18 +15,16 @@ use std::str::FromStr;
 
 /// A combinator that takes a parser `inner` and produces a parser that also consumes both leading and
 /// trailing whitespace, returning the output of `inner`.
-pub fn ws<'a, F: 'a, O, E: ParseError<&'a str>>(
-    inner: F,
-) -> impl FnMut(&'a str) -> IResult<&'a str, O, E>
+pub fn ws<'a, F: 'a, O>(inner: F) -> impl FnMut(&'a str) -> TfRes<&'a str, O>
 where
-    F: FnMut(&'a str) -> IResult<&'a str, O, E>,
+    F: FnMut(&'a str) -> TfRes<&'a str, O>,
 {
     delimited(multispace0, inner, multispace0)
 }
 
 // // typical string
 // // ie. abcdef, de234, jkl_mn, ...
-pub fn tstring(input: &str) -> IResult<&str, &str> {
+pub fn tstring(input: &str) -> TfRes<&str, &str> {
     ws(recognize(pair(
         alt((alpha1, tag("_"))),
         many0(alt((alphanumeric1, tag("_")))),
@@ -35,25 +33,25 @@ pub fn tstring(input: &str) -> IResult<&str, &str> {
 
 // // parse string that is surrounded by " and ".
 // // ie, "abc", "def"
-pub fn qstring(input: &str) -> IResult<&str, &str> {
+pub fn qstring(input: &str) -> TfRes<&str, &str> {
     ws(recognize(delimited(tag("\""), tstring, tag("\""))))(input)
 }
 
 // // parse string that is surrounded by " and ".
 // // ie, "abc", "def"
-pub fn qnumber(input: &str) -> IResult<&str, u32> {
+pub fn qnumber(input: &str) -> TfRes<&str, u32> {
     delimited(tag("\""), positive_number, tag("\""))(input)
 }
 
 // // unsigned integer number
 // // ie, 100, 350
-pub fn positive_number(input: &str) -> IResult<&str, u32> {
+pub fn positive_number(input: &str) -> TfRes<&str, u32> {
     ws(map_res(recognize(digit1), |res: &str| u32::from_str(res)))(input)
 }
 
 // // signed integer number
 // // ie, 100, -20
-pub fn number(input: &str) -> IResult<&str, i32> {
+pub fn number(input: &str) -> TfRes<&str, i32> {
     ws(map_res(
         recognize(pair(opt(alt((tag("+"), tag("-")))), digit1)),
         |res: &str| i32::from_str(res),
@@ -62,7 +60,7 @@ pub fn number(input: &str) -> IResult<&str, i32> {
 
 // parse unsigned floating number
 // The following is adapted from the Python parser by Valentin Lorentz (ProgVal).
-pub fn float(input: &str) -> IResult<&str, f32> {
+pub fn float(input: &str) -> TfRes<&str, f32> {
     ws(map_res(
         alt((
             // Case one: .42
@@ -85,11 +83,11 @@ pub fn float(input: &str) -> IResult<&str, f32> {
     ))(input)
 }
 
-pub fn decimal(input: &str) -> IResult<&str, &str> {
+pub fn decimal(input: &str) -> TfRes<&str, &str> {
     recognize(many1(terminated(one_of("0123456789"), many0(char('_')))))(input)
 }
 
-pub fn boolean_number(input: &str) -> IResult<&str, bool> {
+pub fn boolean_number(input: &str) -> TfRes<&str, bool> {
     map(number, |res| match res {
         0 => false,
         1 => true,
@@ -97,11 +95,11 @@ pub fn boolean_number(input: &str) -> IResult<&str, bool> {
     })(input)
 }
 
-pub fn float_list(input: &str) -> IResult<&str, Vec<f32>> {
+pub fn float_list(input: &str) -> TfRes<&str, Vec<f32>> {
     delimited(ws(tag("(")), separated_list1(tag(","), float), ws(tag(")")))(input)
 }
 
-pub fn number_list(input: &str) -> IResult<&str, Vec<u32>> {
+pub fn number_list(input: &str) -> TfRes<&str, Vec<u32>> {
     delimited(
         ws(tag("(")),
         separated_list1(tag(","), positive_number),
@@ -109,7 +107,7 @@ pub fn number_list(input: &str) -> IResult<&str, Vec<u32>> {
     )(input)
 }
 
-pub fn number_qlist(input: &str) -> IResult<&str, Vec<u32>> {
+pub fn number_qlist(input: &str) -> TfRes<&str, Vec<u32>> {
     delimited(
         ws(tag("\"")),
         separated_list1(tag(","), positive_number),
@@ -117,7 +115,7 @@ pub fn number_qlist(input: &str) -> IResult<&str, Vec<u32>> {
     )(input)
 }
 
-pub fn tf_comment(input: &str) -> IResult<&str, ()> {
+pub fn tf_comment(input: &str) -> TfRes<&str, ()> {
     value(
         (), // Output is thrown away.
         tuple((ws(tag("/*")), take_until("*/"), ws(tag("*/")))),

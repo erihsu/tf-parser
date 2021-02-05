@@ -1,15 +1,15 @@
 use super::base_parser::{boolean_number, float, positive_number, qstring, ws};
+use nom::{
+    branch::{alt, permutation},
+    bytes::complete::tag,
+    combinator::{map, opt},
+    error::context,
+    sequence::{delimited, preceded, tuple},
+};
 
-use nom::bytes::complete::tag;
+use crate::{model::TfContact, TfRes};
 
-use crate::model::TfContact;
-use nom::branch::{alt, permutation};
-use nom::combinator::{map, opt};
-
-use nom::sequence::{delimited, preceded, tuple};
-use nom::IResult;
-
-fn contact_layer(input: &str) -> IResult<&str, (&str, &str, &str)> {
+fn contact_layer(input: &str) -> TfRes<&str, (&str, &str, &str)> {
     tuple((
         preceded(tuple((ws(tag("cutLayer")), ws(tag("=")))), qstring),
         preceded(tuple((ws(tag("lowerLayer")), ws(tag("=")))), qstring),
@@ -17,14 +17,14 @@ fn contact_layer(input: &str) -> IResult<&str, (&str, &str, &str)> {
     ))(input)
 }
 
-fn contact_cutsize(input: &str) -> IResult<&str, (f32, f32)> {
+fn contact_cutsize(input: &str) -> TfRes<&str, (f32, f32)> {
     tuple((
         preceded(tuple((ws(tag("cutWidth")), ws(tag("=")))), float),
         preceded(tuple((ws(tag("cutHeight")), ws(tag("=")))), float),
     ))(input)
 }
 
-fn contact_type(input: &str) -> IResult<&str, bool> {
+fn contact_type(input: &str) -> TfRes<&str, bool> {
     alt((
         map(
             preceded(
@@ -43,7 +43,7 @@ fn contact_type(input: &str) -> IResult<&str, bool> {
     ))(input)
 }
 
-fn contact_cutspacing(input: &str) -> IResult<&str, (f32, Option<f32>)> {
+fn contact_cutspacing(input: &str) -> TfRes<&str, (f32, Option<f32>)> {
     tuple((
         preceded(tuple((ws(tag("minCutSpacing")), ws(tag("=")))), float),
         opt(preceded(
@@ -53,7 +53,7 @@ fn contact_cutspacing(input: &str) -> IResult<&str, (f32, Option<f32>)> {
     ))(input)
 }
 
-fn contact_resistance(input: &str) -> IResult<&str, (f32, f32, f32)> {
+fn contact_resistance(input: &str) -> TfRes<&str, (f32, f32, f32)> {
     tuple((
         preceded(tuple((ws(tag("unitMinResistance")), ws(tag("=")))), float),
         preceded(tuple((ws(tag("unitNomResistance")), ws(tag("=")))), float),
@@ -61,7 +61,7 @@ fn contact_resistance(input: &str) -> IResult<&str, (f32, f32, f32)> {
     ))(input)
 }
 
-fn contact_layer_enc(input: &str) -> IResult<&str, (f32, f32, f32, f32)> {
+fn contact_layer_enc(input: &str) -> TfRes<&str, (f32, f32, f32, f32)> {
     tuple((
         preceded(tuple((ws(tag("upperLayerEncWidth")), ws(tag("=")))), float),
         preceded(tuple((ws(tag("upperLayerEncHeight")), ws(tag("=")))), float),
@@ -70,46 +70,51 @@ fn contact_layer_enc(input: &str) -> IResult<&str, (f32, f32, f32, f32)> {
     ))(input)
 }
 
-pub fn contact_parser(input: &str) -> IResult<&str, TfContact> {
-    let (input, (name, data)) = tuple((
-        preceded(ws(tag("ContactCode")), qstring),
-        delimited(
-            ws(tag("{")),
-            tuple((
-                preceded(
-                    tuple((ws(tag("contactCodeNumber")), ws(tag("=")))),
-                    positive_number,
-                ),
-                permutation((contact_layer, opt(contact_type))),
-                permutation((
-                    contact_cutsize,
-                    contact_layer_enc,
-                    contact_cutspacing,
-                    opt(contact_resistance),
+pub fn contact_parser(input: &str) -> TfRes<&str, TfContact> {
+    context(
+        "Contact Section",
+        tuple((
+            preceded(ws(tag("ContactCode")), qstring),
+            delimited(
+                ws(tag("{")),
+                tuple((
+                    preceded(
+                        tuple((ws(tag("contactCodeNumber")), ws(tag("=")))),
+                        positive_number,
+                    ),
+                    permutation((contact_layer, opt(contact_type))),
+                    permutation((
+                        contact_cutsize,
+                        contact_layer_enc,
+                        contact_cutspacing,
+                        opt(contact_resistance),
+                    )),
                 )),
-            )),
-            ws(tag("}")),
-        ),
-    ))(input)?;
-    Ok((
-        input,
-        TfContact {
-            name: name.to_string(),
-            contact_id: data.0,
-            layer: (
-                ((data.1).0).0.to_string(),
-                ((data.1).0).1.to_string(),
-                ((data.1).0).2.to_string(),
+                ws(tag("}")),
             ),
-            layer_enc: (data.2).1,
-            unit_resistance: (data.2).3,
-            cutsize: (data.2).0,
-            cutspacing: ((data.2).2).0,
-            viafarm_spacing: ((data.2).2).1,
-            is_defaultcontact: (data.1).1.map_or(false, |x| x),
-            is_fatcontact: (data.1).1.map_or(false, |x| !x),
-        },
-    ))
+        )),
+    )(input)
+    .map(|(res, (name, data))| {
+        (
+            res,
+            TfContact {
+                name: name.to_string(),
+                contact_id: data.0,
+                layer: (
+                    ((data.1).0).0.to_string(),
+                    ((data.1).0).1.to_string(),
+                    ((data.1).0).2.to_string(),
+                ),
+                layer_enc: (data.2).1,
+                unit_resistance: (data.2).3,
+                cutsize: (data.2).0,
+                cutspacing: ((data.2).2).0,
+                viafarm_spacing: ((data.2).2).1,
+                is_defaultcontact: (data.1).1.map_or(false, |x| x),
+                is_fatcontact: (data.1).1.map_or(false, |x| !x),
+            },
+        )
+    })
 }
 
 #[cfg(test)]

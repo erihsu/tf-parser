@@ -9,10 +9,10 @@ use super::{
     layer_parser::*, rule_parser::*, stipple_parser::*, technology_parser::*, tile_parser::*,
 };
 
+use crate::TfRes;
 use nom::sequence::tuple;
-use nom::IResult;
-pub fn tf_parser(input: &str) -> IResult<&str, TfData> {
-    let (input, data) = tuple((
+pub fn tf_parser(input: &str) -> TfRes<&str, TfData> {
+    tuple((
         many1(tf_comment),
         technology_parser,
         many1(color_parser),
@@ -26,19 +26,21 @@ pub fn tf_parser(input: &str) -> IResult<&str, TfData> {
         many1(designrule_parser),
         pr_rule_parser,
         many1(density_rule_parser),
-    ))(input)?;
-    Ok((
-        input,
-        TfData {
-            basic: data.1,
-            color: data.2,
-            stipple: data.3,
-            tile: data.4,
-            layer: data.5,
-            contact: data.6,
-            designrule: data.7,
-            prrule: data.8,
-            densityrule: data.9,
-        },
-    ))
+    ))(input)
+    .map(|(res, data)| {
+        (
+            res,
+            TfData {
+                basic: data.1,
+                color: data.2,
+                stipple: data.3,
+                tile: data.4,
+                layer: data.5,
+                contact: data.6,
+                designrule: data.7,
+                prrule: data.8,
+                densityrule: data.9,
+            },
+        )
+    })
 }

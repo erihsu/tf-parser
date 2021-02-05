@@ -1,32 +1,38 @@
 use super::base_parser::{float, qstring, ws};
 
-use nom::bytes::complete::tag;
+use nom::{
+    bytes::complete::tag,
+    error::context,
+    sequence::{delimited, preceded, tuple},
+};
 
-use crate::model::TfTile;
+use crate::{model::TfTile, TfRes};
 
-use nom::sequence::{delimited, preceded, tuple};
-use nom::IResult;
-
-pub fn tile_parser(input: &str) -> IResult<&str, TfTile> {
-    let (input, (name, data)) = tuple((
-        preceded(ws(tag("Tile")), qstring),
-        delimited(
-            ws(tag("{")),
-            tuple((
-                preceded(tuple((ws(tag("width")), ws(tag("=")))), float),
-                preceded(tuple((ws(tag("height")), ws(tag("=")))), float),
-            )),
-            ws(tag("}")),
-        ),
-    ))(input)?;
-    Ok((
-        input,
-        TfTile {
-            name: name.to_string(),
-            width: data.0,
-            height: data.1,
-        },
-    ))
+pub fn tile_parser(input: &str) -> TfRes<&str, TfTile> {
+    context(
+        "Tile Section",
+        tuple((
+            preceded(ws(tag("Tile")), qstring),
+            delimited(
+                ws(tag("{")),
+                tuple((
+                    preceded(tuple((ws(tag("width")), ws(tag("=")))), float),
+                    preceded(tuple((ws(tag("height")), ws(tag("=")))), float),
+                )),
+                ws(tag("}")),
+            ),
+        )),
+    )(input)
+    .map(|(res, (name, data))| {
+        (
+            res,
+            TfTile {
+                name: name.to_string(),
+                width: data.0,
+                height: data.1,
+            },
+        )
+    })
 }
 
 #[cfg(test)]
