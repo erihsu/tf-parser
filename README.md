@@ -1,3 +1,5 @@
+
+[![Doc.rs](https://docs.rs/tf_parser/badge.svg)](https://docs.rs/tf_parser)
 # tf_parser
 Technology file parser in Rust
 
