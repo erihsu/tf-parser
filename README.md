@@ -1,4 +1,5 @@
-
+[![Action Status](https://github.com/erihsu/tf_parser/workflows/Rust/badge.svg)](https://github.com/erihsu/tf_parser/actions)
+[![Crates.io](https://img.shields.io/crates/v/tf_parser.svg)](https://crates.io/crates/tf_parser)
 [![Doc.rs](https://docs.rs/tf_parser/badge.svg)](https://docs.rs/tf_parser)
 # tf_parser
 Technology file parser in Rust
