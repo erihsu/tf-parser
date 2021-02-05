@@ -1,3 +1,5 @@
+//! top parser for technology file
+
 use crate::model::{TfData, TfLayerEnum};
 use nom::branch::alt;
 use nom::combinator::map;
@@ -11,6 +13,7 @@ use super::{
 
 use crate::TfRes;
 use nom::sequence::tuple;
+/// Given the input, return TfData abstruct
 pub fn tf_parser(input: &str) -> TfRes<&str, TfData> {
     tuple((
         many1(tf_comment),

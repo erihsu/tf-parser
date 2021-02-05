@@ -1,4 +1,4 @@
-//! Data structure for Technology parser
+//! Data structure abstract in Technology file
 
 /// Technology File abstract
 pub struct TfData {
@@ -13,7 +13,7 @@ pub struct TfData {
     pub densityrule: Vec<TfDensityRule>,
 }
 
-/// "Technology" Section abstract
+// "Technology" Section abstract
 #[derive(Debug)]
 pub struct TfTechnology {
     pub technology: String,
@@ -65,6 +65,7 @@ pub enum TfLayerEnum {
     DataType(TfLayerDataType),
 }
 
+/// "Layer" Section abstract, including cut layer and metal layer
 pub struct TfLayer {
     pub layer_name: String,
     pub mask_name: Option<String>, // Text layer and diode layer
@@ -79,6 +80,7 @@ pub struct TfLayer {
     pub layer_rule: Option<LayerRule>, // None mean it's text layer
 }
 
+/// "LayerDataType" Section abstract
 pub struct TfLayerDataType {
     pub name: String,
     pub layer_number: u32,
@@ -96,6 +98,7 @@ pub enum ColorEnum {
     Builtin(u32),
 }
 
+/// "LayerRule" Section abstract, including metal layer, cut layer, poly layer rule
 pub enum LayerRule {
     Poly(PolyLayerRule),
     SMetal(SpecialMetalLayerRule),
@@ -187,6 +190,7 @@ pub struct CutLayerRule {
     pub fat_ext_tbl: Option<CutFatExtTbl>,
 }
 
+/// "ContactCode" Section abstract
 pub struct TfContact {
     pub name: String,
     pub contact_id: u32,
@@ -200,6 +204,7 @@ pub struct TfContact {
     pub is_fatcontact: bool,
 }
 
+/// "DesignRule" Section abstract, including metal2cut, metal2metal, metal2poly rule
 pub struct TfDesignRule {
     pub layer1: String,
     pub layer2: String,
@@ -239,6 +244,7 @@ pub struct TfPolyRule {
     pub fat_wire_via_array_excluded_tbl: Vec<u32>,
 }
 
+/// "PRRule" Section abstract
 pub struct TfPRRule {
     pub rowspacing_toptop: f32,
     pub rowspacing_topbot: Option<f32>,
@@ -248,6 +254,7 @@ pub struct TfPRRule {
     pub abuttablebotbot: u32,
 }
 
+/// "DensityRule" Section abstract
 pub struct TfDensityRule {
     pub layer: String,
     pub window_size: u32,

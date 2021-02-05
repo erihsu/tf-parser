@@ -8,7 +8,7 @@ mod layer_parser;
 mod rule_parser;
 mod stipple_parser;
 mod technology_parser;
-mod tf_parser;
+pub mod tf_parser;
 mod tile_parser;
 
 pub use tf_parser::tf_parser;
