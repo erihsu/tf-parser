@@ -1,3 +1,5 @@
+//! Technology file subparser collection
+
 mod base_parser;
 mod color_parser;
 mod contact_parser;

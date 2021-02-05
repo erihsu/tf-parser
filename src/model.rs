@@ -1,3 +1,6 @@
+//! Data structure for Technology parser
+
+/// Technology File abstract
 pub struct TfData {
     pub basic: TfTechnology,
     pub color: Vec<TfColor>,
@@ -10,6 +13,7 @@ pub struct TfData {
     pub densityrule: Vec<TfDensityRule>,
 }
 
+/// "Technology" Section abstract
 #[derive(Debug)]
 pub struct TfTechnology {
     pub technology: String,
@@ -32,7 +36,7 @@ pub struct TfTechnology {
     pub inductance_precision: u32,
     pub grid_resolution: u32,
 }
-
+/// "Color" Section abstract
 pub struct TfColor {
     pub color_id: u32,
     pub rgb_defined: bool,
@@ -41,6 +45,7 @@ pub struct TfColor {
     pub blue: u8,
 }
 
+/// "Stipple" Section abstract
 pub struct TfStipple {
     pub name: String,
     pub width: u32,
@@ -48,6 +53,7 @@ pub struct TfStipple {
     pub pattern: Vec<bool>,
 }
 
+/// "Tile" Section abstract
 pub struct TfTile {
     pub name: String,
     pub width: f32,

@@ -3,14 +3,22 @@
 
 //! # Example
 //!
-//!
+//! use tf_parser::TfData;
+//! pub fn parse_tf<P>(file_path: P) -> Result<TfData, Box<dyn std::error::Error>>
+//! where
+//!    P: AsRef<Path>,
+//! {
+//!    let tf_data: TfData = fs::read_to_string(file_path)?.parse()?;
+//!    Ok(tf_data)
+//!}
+//! let data = parse_tf("example.tf");
 //!
 //!
 
 mod model;
 mod parser;
 
-use model::TfData;
+pub use model::*;
 use parser::tf_parser;
 
 use nom::{
@@ -18,9 +26,7 @@ use nom::{
     Err, IResult,
 };
 use std::{
-    fs,
     io::{Error, ErrorKind},
-    path::Path,
     str::FromStr,
 };
 
@@ -42,14 +48,6 @@ impl FromStr for TfData {
             )),
         }
     }
-}
-
-pub fn parse_tf<P>(file_path: P) -> Result<TfData, Box<dyn std::error::Error>>
-where
-    P: AsRef<Path>,
-{
-    let tf_data: TfData = fs::read_to_string(file_path)?.parse()?;
-    Ok(tf_data)
 }
 
 pub type TfRes<T, U> = IResult<T, U, VerboseError<T>>;
