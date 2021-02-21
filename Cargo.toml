@@ -1,5 +1,5 @@
 [package]
-name = "tf_parser"
+name = "tf-parser"
 version = "0.1.0"
 authors = ["erihsu <xuzhenyutc@icloud.com>"]
 edition = "2018"
