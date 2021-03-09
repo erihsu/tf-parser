@@ -26,9 +26,9 @@
 //! The parser currently just support Synopsys Appolo compatible technology file format. It will meet failure when parsing .techfile for Cadence pdks
 
 pub mod model;
-pub mod parser;
+mod parser;
 
-use model::*;
+use model::TfData;
 use parser::tf_parser;
 
 use nom::{
