@@ -28,7 +28,7 @@
 pub mod model;
 pub mod parser;
 
-use model::TfData;
+use model::*;
 use parser::tf_parser;
 
 use nom::{
