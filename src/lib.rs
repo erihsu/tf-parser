@@ -6,6 +6,7 @@
 //! # Example
 //!```rust
 //!use tf_parser::TfData;
+//!use std::path::Path;
 //!pub fn parse_tf<P>(file_path: P) -> Result<TfData, Box<dyn std::error::Error>>
 //!where
 //!   P: AsRef<Path>,
