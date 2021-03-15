@@ -31,6 +31,14 @@ pub fn tf_parser(input: &str) -> TfRes<&str, TfData> {
         many1(density_rule_parser),
     ))(input)
     .map(|(res, data)| {
+        let mut layers = Vec::new();
+        let mut layer_dts = Vec::new();
+        for item in data.5 {
+            match item {
+                TfLayerEnum::Layer(x) => layers.push(x),
+                TfLayerEnum::DataType(x) => layer_dts.push(x),
+            }
+        }
         (
             res,
             TfData {
@@ -38,7 +46,8 @@ pub fn tf_parser(input: &str) -> TfRes<&str, TfData> {
                 color: data.2,
                 stipple: data.3,
                 tile: data.4,
-                layer: data.5,
+                layer: layers,
+                layer_dt: layer_dts,
                 contact: data.6,
                 designrule: data.7,
                 prrule: data.8,
