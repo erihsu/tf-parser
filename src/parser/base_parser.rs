@@ -34,7 +34,7 @@ pub fn tstring(input: &str) -> TfRes<&str, &str> {
 // // parse string that is surrounded by " and ".
 // // ie, "abc", "def"
 pub fn qstring(input: &str) -> TfRes<&str, &str> {
-    ws(recognize(delimited(tag("\""), tstring, tag("\""))))(input)
+    delimited(tag("\""), tstring, tag("\""))(input)
 }
 
 // // parse string that is surrounded by " and ".
