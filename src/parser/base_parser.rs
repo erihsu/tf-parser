@@ -4,7 +4,7 @@ use nom::bytes::complete::{tag, take_until};
 use nom::character::complete::{alpha1, alphanumeric1, char, digit1, multispace0, one_of};
 use nom::combinator::{map, map_res, opt, recognize, value};
 
-use nom::multi::{many0, many1, separated_list1};
+use nom::multi::{many0, many1};
 
 use crate::TfRes;
 use nom::sequence::{delimited, pair, preceded, terminated, tuple};
@@ -95,25 +95,25 @@ pub fn boolean_number(input: &str) -> TfRes<&str, bool> {
     })(input)
 }
 
-pub fn float_list(input: &str) -> TfRes<&str, Vec<f32>> {
-    delimited(ws(tag("(")), separated_list1(tag(","), float), ws(tag(")")))(input)
-}
+// pub fn float_list(input: &str) -> TfRes<&str, Vec<f32>> {
+//     delimited(ws(tag("(")), separated_list1(tag(","), float), ws(tag(")")))(input)
+// }
 
-pub fn number_list(input: &str) -> TfRes<&str, Vec<u32>> {
-    delimited(
-        ws(tag("(")),
-        separated_list1(tag(","), positive_number),
-        ws(tag(")")),
-    )(input)
-}
+// pub fn number_list(input: &str) -> TfRes<&str, Vec<u32>> {
+//     delimited(
+//         ws(tag("(")),
+//         separated_list1(tag(","), positive_number),
+//         ws(tag(")")),
+//     )(input)
+// }
 
-pub fn number_qlist(input: &str) -> TfRes<&str, Vec<u32>> {
-    delimited(
-        ws(tag("\"")),
-        separated_list1(tag(","), positive_number),
-        ws(tag("\"")),
-    )(input)
-}
+// pub fn number_qlist(input: &str) -> TfRes<&str, Vec<u32>> {
+//     delimited(
+//         ws(tag("\"")),
+//         separated_list1(tag(","), positive_number),
+//         ws(tag("\"")),
+//     )(input)
+// }
 
 pub fn tf_comment(input: &str) -> TfRes<&str, ()> {
     value(

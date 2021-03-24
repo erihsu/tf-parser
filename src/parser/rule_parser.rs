@@ -1,12 +1,9 @@
-use super::base_parser::{
-    boolean_number, float, float_list, number_list, positive_number, qstring, ws,
-};
+use super::base_parser::{float, positive_number, qstring, ws};
 use crate::TfJson;
 use nom::bytes::complete::take_until;
 use nom::combinator::value;
 
 use nom::{
-    branch::permutation,
     bytes::complete::tag,
     combinator::opt,
     error::context,
@@ -14,7 +11,7 @@ use nom::{
 };
 
 use crate::{
-    model::{TfCutRule, TfDensityRule, TfDesignRule, TfMetalRule, TfPRRule, TfPolyRule},
+    model::{TfDensityRule, TfDesignRule, TfPRRule},
     TfRes,
 };
 
@@ -23,139 +20,6 @@ fn layer_pair(input: &str) -> TfRes<&str, (&str, &str)> {
         preceded(tuple((ws(tag("layer1")), ws(tag("=")))), qstring),
         preceded(tuple((ws(tag("layer2")), ws(tag("=")))), qstring),
     ))(input)
-}
-
-fn routelayer_rule(input: &str) -> TfRes<&str, TfMetalRule> {
-    let (input, data) = tuple((
-        preceded(tuple((ws(tag("minSpacing")), ws(tag("=")))), float),
-        opt(preceded(
-            tuple((ws(tag("stackable")), ws(tag("=")))),
-            boolean_number,
-        )),
-    ))(input)?;
-    Ok((
-        input,
-        TfMetalRule {
-            minspacing: data.0,
-            stackable: data.1.map_or(false, |x| x),
-        },
-    ))
-}
-
-fn cutlayer_rule(input: &str) -> TfRes<&str, TfCutRule> {
-    let (input, data) = permutation((
-        preceded(
-            tuple((ws(tag("endOfLineEnc2NeighborTblSize")), ws(tag("=")))),
-            positive_number,
-        ),
-        preceded(
-            tuple((ws(tag("endOfLineEnc2NeighborThreshold")), ws(tag("=")))),
-            float,
-        ),
-        preceded(
-            tuple((
-                ws(tag("endOfLineEnc2NeighborCornerKeepoutWidth")),
-                ws(tag("=")),
-            )),
-            float,
-        ),
-        preceded(
-            tuple((
-                ws(tag("endOfLineEnc2NeighborSideKeepoutLength")),
-                ws(tag("=")),
-            )),
-            float,
-        ),
-        preceded(
-            tuple((ws(tag("endOfLineEnc2NeighborSideMinSpacing")), ws(tag("=")))),
-            float,
-        ),
-        preceded(
-            tuple((ws(tag("endOfLineEnc2NeighborMinLength")), ws(tag("=")))),
-            float,
-        ),
-        preceded(
-            tuple((ws(tag("endOfLineEnc2NeighborTbl")), ws(tag("=")))),
-            float_list,
-        ),
-        preceded(
-            tuple((ws(tag("endOfLineEnc2NeighborSpacingTbl")), ws(tag("=")))),
-            float_list,
-        ),
-        preceded(
-            tuple((
-                ws(tag("endOfLineEnc2NeighborViaArrayExcludedTbl")),
-                ws(tag("=")),
-            )),
-            float_list,
-        ),
-        preceded(
-            tuple((
-                ws(tag("endOfLineEnc2NeighborWireMinThreshold")),
-                ws(tag("=")),
-            )),
-            float,
-        ),
-    ))(input)?;
-
-    Ok((
-        input,
-        TfCutRule {
-            tblsize: data.0,
-            threshold: data.1,
-            cornerkeepout_width: data.2,
-            sidekeepout_length: data.3,
-            sideminspacing: data.4,
-            minlength: data.5,
-            tbl: data.6,
-            spacing_tbl: data.7,
-            viaarray_excluded_tbl: data.8,
-            wire_minthreshold: data.9,
-        },
-    ))
-}
-
-fn polylayer_rule(input: &str) -> TfRes<&str, TfPolyRule> {
-    let (input, data) = tuple((
-        preceded(
-            tuple((ws(tag("fatWireViaEncTblSize")), ws(tag("=")))),
-            positive_number,
-        ),
-        preceded(
-            tuple((ws(tag("fatWireViaEncWidthThresholdTbl")), ws(tag("=")))),
-            float_list,
-        ),
-        preceded(
-            tuple((
-                ws(tag("fatWireViaEncParallelLengthThresholdTbl")),
-                ws(tag("=")),
-            )),
-            float_list,
-        ),
-        preceded(
-            tuple((ws(tag("fatWireViaEncMaxSpacingThresholdTbl")), ws(tag("=")))),
-            float_list,
-        ),
-        preceded(
-            tuple((ws(tag("fatWireViaEnclosureTbl")), ws(tag("=")))),
-            float_list,
-        ),
-        preceded(
-            tuple((ws(tag("fatWireViaArrayExcludedTbl")), ws(tag("=")))),
-            number_list,
-        ),
-    ))(input)?;
-    Ok((
-        input,
-        TfPolyRule {
-            fat_wire_via_enc_tbl_size: data.0,
-            fat_wire_via_enc_width_threshold_tbl: data.1,
-            fat_wire_via_enc_parallel_length_threshold_tbl: data.2,
-            fat_wire_via_enc_max_spacing_threshold_tbl: data.3,
-            fat_wire_via_enclosure_tbl: data.4,
-            fat_wire_via_array_excluded_tbl: data.5,
-        },
-    ))
 }
 
 pub fn designrule_parser(input: &str) -> TfRes<&str, TfDesignRule> {

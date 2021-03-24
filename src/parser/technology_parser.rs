@@ -1,4 +1,4 @@
-use super::base_parser::{float, number, positive_number, qstring, ws};
+use super::base_parser::{number, positive_number, qstring, ws};
 use crate::{model::TfTechnology, TfRes};
 
 use nom::{
