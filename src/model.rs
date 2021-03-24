@@ -1,5 +1,7 @@
 //! Data structure abstract in Technology file
 
+use crate::TfJson;
+
 /// Technology File abstract
 pub struct TfData {
     pub basic: TfTechnology,
@@ -71,14 +73,18 @@ pub struct TfLayer {
     pub layer_name: String,
     pub mask_name: Option<String>, // Text layer and diode layer
     pub layer_id: u32,
+    pub layer_ui: TfLayerUISetting,
+    pub is_defaultlayer: bool,
+    pub layer_rule: Option<TfJson>, // None mean it's text layer
+}
+
+pub struct TfLayerUISetting {
     pub visible: bool,
     pub selectable: bool,
     pub blink: bool,
-    pub is_defaultlayer: bool,
     pub line_style: String,
     pub pattern: String,
     pub color: ColorEnum,
-    pub layer_rule: Option<LayerRule>, // None mean it's text layer
 }
 
 /// "LayerDataType" Section abstract
@@ -86,12 +92,7 @@ pub struct TfLayerDataType {
     pub name: String,
     pub layer_number: u32,
     pub data_type_number: u32,
-    pub visible: bool,
-    pub selectable: bool,
-    pub blink: bool,
-    pub color: ColorEnum,
-    pub line_style: String,
-    pub pattern: String,
+    pub layer_dt_ui: TfLayerUISetting,
 }
 
 pub enum ColorEnum {
@@ -196,20 +197,14 @@ pub struct TfContact {
     pub name: String,
     pub contact_id: u32,
     pub layer: (String, String, String), // (cutlayer,lowerlayer,upperlayer)
-    pub layer_enc: (f32, f32, f32, f32), // upper, lower
-    pub unit_resistance: Option<(f32, f32, f32)>,
-    pub cutsize: (f32, f32),
-    pub cutspacing: f32,
-    pub viafarm_spacing: Option<f32>,
-    pub is_defaultcontact: bool,
-    pub is_fatcontact: bool,
+    pub contact_rule: Option<TfJson>,
 }
 
 /// "DesignRule" Section abstract, including metal2cut, metal2metal, metal2poly rule
 pub struct TfDesignRule {
     pub layer1: String,
     pub layer2: String,
-    pub rule_data: TfRule,
+    pub rule_data: Option<TfJson>,
 }
 
 pub enum TfRule {

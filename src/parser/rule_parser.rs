@@ -1,17 +1,20 @@
 use super::base_parser::{
     boolean_number, float, float_list, number_list, positive_number, qstring, ws,
 };
+use crate::TfJson;
+use nom::bytes::complete::take_until;
+use nom::combinator::value;
 
 use nom::{
-    branch::{alt, permutation},
+    branch::permutation,
     bytes::complete::tag,
-    combinator::{map, opt},
+    combinator::opt,
     error::context,
     sequence::{delimited, preceded, tuple},
 };
 
 use crate::{
-    model::{TfCutRule, TfDensityRule, TfDesignRule, TfMetalRule, TfPRRule, TfPolyRule, TfRule},
+    model::{TfCutRule, TfDensityRule, TfDesignRule, TfMetalRule, TfPRRule, TfPolyRule},
     TfRes,
 };
 
@@ -162,14 +165,7 @@ pub fn designrule_parser(input: &str) -> TfRes<&str, TfDesignRule> {
             ws(tag("DesignRule")),
             delimited(
                 ws(tag("{")),
-                tuple((
-                    layer_pair,
-                    alt((
-                        map(routelayer_rule, |x| TfRule::MetalRule(x)),
-                        map(cutlayer_rule, |x| TfRule::CutRule(x)),
-                        map(polylayer_rule, |x| TfRule::PolyRule(x)),
-                    )),
-                )),
+                tuple((layer_pair, value((), take_until("}")))),
                 ws(tag("}")),
             ),
         ),
@@ -180,7 +176,7 @@ pub fn designrule_parser(input: &str) -> TfRes<&str, TfDesignRule> {
             TfDesignRule {
                 layer1: (data.0).0.to_string(),
                 layer2: (data.0).1.to_string(),
-                rule_data: data.1,
+                rule_data: None::<TfJson>,
             },
         )
     })

@@ -1,7 +1,7 @@
 use std::fs;
 use std::time::*;
 fn main() {
-    use tf_parser::TfData;
+    use tf_parser::model::TfData;
     let now = SystemTime::now();
     let _tf_data: TfData = fs::read_to_string("example.tf").unwrap().parse().unwrap();
 

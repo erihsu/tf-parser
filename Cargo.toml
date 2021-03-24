@@ -11,3 +11,4 @@ keywords = ["eda","parser","nom","ic"]
 
 [dependencies]
 nom = "6"
+serde_json = "1.0"

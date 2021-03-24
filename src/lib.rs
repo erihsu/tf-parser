@@ -62,3 +62,4 @@ impl FromStr for TfData {
 }
 
 pub type TfRes<T, U> = IResult<T, U, VerboseError<T>>;
+pub type TfJson = serde_json::Value;
