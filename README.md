@@ -27,3 +27,12 @@ The .tf generally contains 10 parts: Comment, Technology, Color, Stipple, Tile, 
 The parser is developed based on nom parser combinator framework and currently support parse Synopsys Apollo technology format file. You can try it under example
 
 If you are interested in our work, please contact [xuzhenyutc@icloud.com]
+
+# License
+
+Licensed under either of these:
+
+ * Apache License, Version 2.0, ([LICENSE-APACHE](LICENSE-APACHE) or
+   https://www.apache.org/licenses/LICENSE-2.0)
+ * MIT license ([LICENSE-MIT](LICENSE-MIT) or
+   https://opensource.org/licenses/MIT)
